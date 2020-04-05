@@ -1,0 +1,10 @@
+{
+        "name": "locale",
+        "description": "Bashlets localization tools",
+        "version": "0.1",
+        "author": {
+                "name": "Roberto Reale",
+                "email": "roberto@reale.me"
+        },
+        "license": "MIT"
+}

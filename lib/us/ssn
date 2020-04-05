@@ -1,0 +1,84 @@
+#!/bin/bash
+
+
+################################################################################
+#                                         
+# |              |    |         |         
+# |---.,---.,---.|---.|    ,---.|--- ,---.
+# |   |,---|`---.|   ||    |---'|    `---.
+# `---'`---^`---'`   '`---'`---'`---'`---'
+#
+#                                        
+# Bashlets -- A modular extensible toolbox for Bash
+#
+# Copyright (c) 2014-8 Roberto Reale
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+################################################################################
+
+source bashlets core::datatype::string
+source bashlets core::datatype::unsigned
+
+#@public
+function bashlets::locale::us::ssn::validate()
+{
+    local ssn="${1//[[:blank:]-]/}"
+    local area="${ssn:0:3}" group="${ssn:3:2}" serial="${ssn:5:4}"
+
+    [[ $ssn =~ ^[0-9]{9}$ ]] || return 1
+
+    # Do not allow a Social Security Number that ...
+    # ... Begins with 666 or with any value in the range 900-999
+    [[ $area == 666 || $area =~ ^9.. ]] && return 1
+    # ... Contains all zeroes in any specific group
+    [[ $area == 000 || $group == 000 || $serial == 000 ]] && return 1
+    # ... Is a misused SSN (https://www.ssa.gov/history/ssn/misused.html)
+    [[ $ssn == 078051120 || $ssn == 219099999 ]] && return 1
+    # ... Contains all matching values
+    [[ "$($BASHLETS_NAMESPACE string transpose "$ssn" | uniq | wc -l)" -eq 1 ]] && return 1
+
+    return 0
+}
+
+#@public
+function bashlets::locale::us::ssn::random()
+{
+    local ssn area group serial
+
+    while true
+    do
+        ssn="$($BASHLETS_NAMESPACE unsigned random 9)"
+        bashlets::locale::us::ssn::validate "$ssn" && break
+    done
+
+    area="${ssn:0:3}"
+    group="${ssn:3:2}"
+    serial="${ssn:5:4}"
+
+    printf "%s-%s-%s\n" "$area" "$group" "$serial"
+}
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh
